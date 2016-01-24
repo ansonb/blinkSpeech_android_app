@@ -244,14 +244,12 @@ public class MainActivity extends ActionBarActivity {
 	@Override
     public void onPause(){
         super.onPause();
-        showToast("Leaving Activity");
         leftActivity = true;
      }
     
     @Override
-    public void onRestart(){
-    	super.onRestart();
-    	showToast("Restarting activity");
+    public void onResume(){
+    	super.onResume();
     	leftActivity = false;
     	mTV.setText(mString);
     }

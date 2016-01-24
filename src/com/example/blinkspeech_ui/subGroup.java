@@ -316,8 +316,8 @@ public class subGroup extends ActionBarActivity {
      }
 	
 	@Override
-    public void onRestart(){
-    	super.onRestart();
+    public void onResume(){
+    	super.onResume();
     }
 	
 	@Override
