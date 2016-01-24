@@ -197,7 +197,7 @@ public class subGroup extends ActionBarActivity {
 			}
 		});
        
-       if(mSocket.isConnected()){
+       if(mSocket!=null && mSocket.isConnected()){
     	   mHandler.start();
        }
        

@@ -251,6 +251,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public void onRestart(){
     	super.onRestart();
+    	showToast("Restarting activity");
     	leftActivity = false;
     	mTV.setText(mString);
     }
