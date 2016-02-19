@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -78,6 +79,8 @@ public class MainActivity extends ActionBarActivity {
 		SECOND,
 		THIRD,
 		SPEAKER,
+		SAVE,
+		LIST,
 		ALL
 	};
 	
@@ -104,9 +107,12 @@ public class MainActivity extends ActionBarActivity {
 	
 	public Menu menu;
 	
+	//0-Auto Scroll;1-Full Control
+	static public int mode=1;
+	static public int totalModes=2;
 	
-	
-	
+	Button mBtnSave, mBtnList;
+		
     @SuppressLint("NewApi") @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,6 +124,11 @@ public class MainActivity extends ActionBarActivity {
         
         mTV = (TextView) findViewById(R.id.textView1);
         mButton = (Button) findViewById(R.id.button1);
+        mBtnSave = (Button)findViewById(R.id.storeInDB);
+        mBtnList = (Button)findViewById(R.id.goToList);
+        
+        mBtnSave.setBackgroundResource(R.drawable.save);
+        mBtnList.setBackgroundResource(R.drawable.list);
         
         mIV1 = (TextView) findViewById(R.id.abc1);
         mIV2 = (TextView) findViewById(R.id.def2);
@@ -186,6 +197,30 @@ public class MainActivity extends ActionBarActivity {
 			}
 		});
         
+        mBtnSave.getBackground().setAlpha(255);
+        mBtnSave.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
+				DOP.putInfo(DOP, mTV.getText().toString());
+				showToast("List Updated");
+			}
+		});
+        
+        mBtnList.getBackground().setAlpha(255);
+        mBtnList.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				Log.d("Main Activity", "In list onClick");
+				final Intent i = new Intent(MainActivity.this, storedPhrases.class);
+				Log.d("Main Activity", "Leaving Main to list");
+				startActivity(i);
+			}
+		});
+        
         mProgressDlg = new ProgressDialog(this);
         mProgressDlg.setMessage("Scanning...");
 		mProgressDlg.setCancelable(false);
@@ -217,6 +252,9 @@ public class MainActivity extends ActionBarActivity {
         		long delta;
         		int count = 0;
         		while(true){
+        			if(mode==1) continue;
+        			if(leftActivity) continue;
+        			
         			currTime = System.currentTimeMillis();
         			delta = currTime - prevTime;
         			if(delta>1000){
@@ -224,8 +262,7 @@ public class MainActivity extends ActionBarActivity {
         				final int fcount = count;
         				MainActivity.this.runOnUiThread(new Runnable(){
         					public void run(){
-        						
-        						
+        						//scrollHandler();   						
         					}
         				});
         				delta=0;
@@ -234,13 +271,43 @@ public class MainActivity extends ActionBarActivity {
         		}
         	}
         });
-        check_time.start();
-                
+        //check_time.start();
+        //start_autoScroll();
         
         showCursor();
     }
     
-    @SuppressWarnings("deprecation")
+    //TODO check if multiple copies created while alive
+    private void start_autoScroll() {
+    	new Thread(new Runnable(){
+        	public void run(){
+        		long currTime = System.currentTimeMillis();
+        		long prevTime = currTime;
+        		long delta;
+        		int count = 0;
+        		while(true){
+        			if(mode==1) break;
+        			if(leftActivity) continue;
+        			
+        			currTime = System.currentTimeMillis();
+        			delta = currTime - prevTime;
+        			if(delta>1000){
+        				count++;
+        				final int fcount = count;
+        				MainActivity.this.runOnUiThread(new Runnable(){
+        					public void run(){
+        						scrollHandler();   						
+        					}
+        				});
+        				delta=0;
+        				prevTime = currTime;
+        			}
+        		}
+        	}
+        }).start();		
+	}
+
+	@SuppressWarnings("deprecation")
 	@Override
     public void onPause(){
         super.onPause();
@@ -293,7 +360,7 @@ public class MainActivity extends ActionBarActivity {
         		return true;
         	}
         	
-        	//If not connected connect
+        	//If not connected, connect
         	mDevice = findDevice(deviceName); //Find device in list of paired devices
         	if(mDevice==null){  //If not paired
         		scanDevice();
@@ -302,6 +369,22 @@ public class MainActivity extends ActionBarActivity {
         		connectBt();
         	}
         	return true;
+        }else if(id==R.id.action_mode){
+        	mode = (mode+1)%totalModes;
+        	switch(mode){
+        	case 0:
+        		showToast("In auto scroll mode");
+        		start_autoScroll();
+        		break;
+        	case 1:
+        		showToast("In full control mode");
+        		break;
+        	default:
+        		break;        	
+        	}
+        	
+        	return true;
+        	
         }
         return super.onOptionsItemSelected(item);
     }
@@ -500,6 +583,7 @@ public class MainActivity extends ActionBarActivity {
 						
 						mStatus = Status.CONNECTED;
 						showToast("Device Connected");
+						
 		            } catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -597,6 +681,16 @@ public class MainActivity extends ActionBarActivity {
 	}
 	
 	private void showCursor(){
+		 mIV1.setBackgroundColor(Color.WHITE);
+	     mIV2.setBackgroundColor(Color.WHITE);
+	     mIV3.setBackgroundColor(Color.WHITE);
+	     mIV4.setBackgroundColor(Color.WHITE);
+	     mIV5.setBackgroundColor(Color.WHITE);
+	     mIV6.setBackgroundColor(Color.WHITE);
+	     mIV7.setBackgroundColor(Color.WHITE);
+	     mIV8.setBackgroundColor(Color.WHITE);
+	     mIV9.setBackgroundColor(Color.WHITE);
+	     
 		 mIV1.getBackground().setAlpha(25);
 	     mIV2.getBackground().setAlpha(25);
 	     mIV3.getBackground().setAlpha(25);
@@ -607,19 +701,24 @@ public class MainActivity extends ActionBarActivity {
 	     mIV8.getBackground().setAlpha(25);
 	     mIV9.getBackground().setAlpha(25);
 	     
-	     mButton.getBackground().setAlpha(255);
+	     mButton.getBackground().setAlpha(100);
+	     mBtnSave.getBackground().setAlpha(100);
+	     mBtnList.getBackground().setAlpha(100);
 
 	     switch(rowPos){
 	     case FIRST:
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV1.getBackground().setAlpha(50);
+		    	 mIV1.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV2.getBackground().setAlpha(50);
+		    	 mIV2.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV3.getBackground().setAlpha(50);
+		    	 mIV3.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -631,12 +730,15 @@ public class MainActivity extends ActionBarActivity {
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV4.getBackground().setAlpha(50);
+		    	 mIV4.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV5.getBackground().setAlpha(50);
+		    	 mIV5.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV6.getBackground().setAlpha(50);
+		    	 mIV6.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -648,12 +750,15 @@ public class MainActivity extends ActionBarActivity {
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV7.getBackground().setAlpha(50);
+		    	 mIV7.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV8.getBackground().setAlpha(50);
+		    	 mIV8.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV9.getBackground().setAlpha(50);
+		    	 mIV9.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -662,7 +767,13 @@ public class MainActivity extends ActionBarActivity {
 		     }
 	    	 break;
 	     case SPEAKER:
-	    	 mButton.getBackground().setAlpha(150);
+	    	 mButton.getBackground().setAlpha(255);
+	    	 break;
+	     case SAVE:
+	    	 mBtnSave.getBackground().setAlpha(255);
+	    	 break;
+	     case LIST:
+	    	 mBtnList.getBackground().setAlpha(255);
 	    	 break;
 	     case ALL:
 	    	 break;
@@ -671,9 +782,40 @@ public class MainActivity extends ActionBarActivity {
 	     }
 	}
 	
+	private void scrollHandler(){
+		if(colPos.equals(cursorPos.FIRST)){
+			colPos = cursorPos.SECOND;
+		}else if(colPos.equals(cursorPos.SECOND)){
+			colPos = cursorPos.THIRD;
+		}else if(colPos.equals(cursorPos.THIRD)){
+			if(rowPos.equals(cursorPos.FIRST)){
+				rowPos = cursorPos.SECOND;
+				colPos = cursorPos.FIRST;
+			}else if(rowPos.equals(cursorPos.SECOND)){
+				rowPos = cursorPos.THIRD;
+				colPos = cursorPos.FIRST;
+			}else if(rowPos.equals(cursorPos.THIRD)){
+				rowPos = cursorPos.SAVE;
+				colPos = cursorPos.SAVE;
+			}
+			
+		}else if(colPos.equals(cursorPos.SAVE)){
+			rowPos = cursorPos.LIST;
+			colPos = cursorPos.LIST;
+		}else if(colPos.equals(cursorPos.LIST)){
+			rowPos = cursorPos.SPEAKER;
+			colPos = cursorPos.SPEAKER;
+		}else if(colPos.equals(cursorPos.SPEAKER)){
+			rowPos = cursorPos.FIRST;
+			colPos = cursorPos.FIRST;
+		}
+		
+		showCursor();		
+	}
+	
 	private void scrollHandler(String s) {
 		// TODO Auto-generated method stub
-		if(s.equals("b")){
+		if(s.equals("b") && mode==1){
 			if(colPos.equals(cursorPos.FIRST)){
 				colPos = cursorPos.SECOND;
 			}else if(colPos.equals(cursorPos.SECOND)){
@@ -686,21 +828,37 @@ public class MainActivity extends ActionBarActivity {
 					rowPos = cursorPos.THIRD;
 					colPos = cursorPos.FIRST;
 				}else if(rowPos.equals(cursorPos.THIRD)){
-					rowPos = cursorPos.SPEAKER;
-					colPos = cursorPos.SPEAKER;
+					rowPos = cursorPos.SAVE;
+					colPos = cursorPos.SAVE;
 				}
 				
+			}else if(colPos.equals(cursorPos.SAVE)){
+				rowPos = cursorPos.LIST;
+				colPos = cursorPos.LIST;
+			}else if(colPos.equals(cursorPos.LIST)){
+				rowPos = cursorPos.SPEAKER;
+				colPos = cursorPos.SPEAKER;
 			}else if(colPos.equals(cursorPos.SPEAKER)){
 				rowPos = cursorPos.FIRST;
 				colPos = cursorPos.FIRST;
 			}
 			
 			showCursor();
-		}else if(s.equals("B")){
+		}else if(s.equals("B")||(s.equals("b")&&mode==0)){
 			if(colPos.equals(cursorPos.SPEAKER)){
 				String mString = mTV.getText().toString();
 			    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
 			    return;
+			}else if(colPos.equals(cursorPos.SAVE)){
+				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
+				DOP.putInfo(DOP, mTV.getText().toString());
+				showToast("List Updated");				
+				return;
+			}else if(colPos.equals(cursorPos.LIST)){
+				final Intent i = new Intent(MainActivity.this, storedPhrases.class);
+				Log.d("Main Activity", "Leaving Main to list");
+				startActivity(i);				
+				return;
 			}
 			group = findGroup();
 			if(group!=0){

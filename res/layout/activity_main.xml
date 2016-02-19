@@ -25,6 +25,7 @@
         android:alpha="0.75"
         android:layout_marginRight="1dp"/>
 
+
     <TextView
         android:id="@+id/def2"
         android:layout_width="wrap_content"
@@ -149,7 +150,7 @@
 
      <EditText
          android:id="@+id/textView1"
-         android:layout_width="wrap_content"
+         android:layout_width="match_parent"
          android:layout_height="40dp"
          android:layout_alignParentBottom="true"
          android:layout_alignParentLeft="true"
@@ -163,8 +164,32 @@
          android:layout_width="wrap_content"
          android:layout_height="wrap_content"
          android:layout_alignParentBottom="true"
-         android:layout_alignTop="@+id/textView1"
-         android:layout_toRightOf="@id/textView1"
+         android:layout_alignParentRight="true"
+         android:layout_alignTop="@id/textView1"
          android:background="@drawable/speaker"/>
+    
+     <Button
+         android:id="@+id/goToList"
+         style="?android:attr/buttonStyleSmall"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignTop="@id/textView1"
+         android:layout_toLeftOf="@id/button1"
+         android:background="@drawable/list"/>
+     
+     <Button 
+         android:id="@+id/storeInDB"
+         style="?android:attr/buttonStyleSmall"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignTop="@id/textView1"
+         android:layout_toLeftOf="@id/goToList"
+         android:background="@drawable/save"/>
+     
+
+     
+     
 
 </RelativeLayout>

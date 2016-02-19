@@ -14,6 +14,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.Selection;
+import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +35,7 @@ import android.widget.Toast;
 public class subGroup extends ActionBarActivity {
 
 	boolean endOfActivity = false;
+	boolean leftActivity = false;
 	TextView mIV1;
 	TextView mIV2;
 	TextView mIV3;
@@ -76,6 +79,8 @@ public class subGroup extends ActionBarActivity {
 		SECOND,
 		THIRD,
 		SPEAKER,
+		SAVE,
+		LIST,
 		ALL
 	};
 	
@@ -90,6 +95,9 @@ public class subGroup extends ActionBarActivity {
 	
 	scrollOption currScroll;
 	
+	int mode = MainActivity.mode;
+	int totalModes = MainActivity.totalModes;
+	
 	public static boolean messageReceived = false;
 	public static String mReceived = "x";
 	
@@ -100,17 +108,19 @@ public class subGroup extends ActionBarActivity {
 	
 	TextToSpeech tts;
 	
+	Button mBtnSave, mBtnList;
+	
 	private char keyBoard[][] = 
 		{
-			{'.','A',',','B','<','C',' ','1','$'},
-			{'.','D',',','E','<','F',' ','2','$'},
-			{'.','G',',','H','<','I',' ','3','$'},
-			{'.','J',',','K','<','L',' ','4','$'},
-			{'.','M',',','N','<','O',' ','5','$'},
-			{'.','P',',','Q','<','R',' ','6','$'},
-			{'.','S',',','T','<','U',' ','7','$'},
-			{'.','V',',','W','<','X',' ','8','$'},
-			{'.','Y',',','Z','<','0',' ','9','$'},
+			{'.','a',',','b','<','c',' ','1','$'},
+			{'.','d',',','e','<','f',' ','2','$'},
+			{'.','g',',','h','<','i',' ','3','$'},
+			{'.','j',',','k','<','l',' ','4','$'},
+			{'.','m',',','n','<','o',' ','5','$'},
+			{'.','p',',','q','<','r',' ','6','$'},
+			{'.','s',',','t','<','u',' ','7','$'},
+			{'.','v',',','w','<','x',' ','8','$'},
+			{'.','y',',','z','<','0',' ','9','$'},
 		};
 	
 	int group=0;
@@ -134,6 +144,11 @@ public class subGroup extends ActionBarActivity {
         
         mTV = (TextView) findViewById(R.id.textView1);
         mButton = (Button) findViewById(R.id.button1);
+        mBtnSave = (Button)findViewById(R.id.storeInDB);
+        mBtnList = (Button)findViewById(R.id.goToList);
+        
+        mBtnSave.setBackgroundResource(R.drawable.save);
+        mBtnList.setBackgroundResource(R.drawable.list);
         
         mTV.setText(MainActivity.mString);
         
@@ -197,23 +212,32 @@ public class subGroup extends ActionBarActivity {
 			}
 		});
        
+       mBtnSave.getBackground().setAlpha(255);
+       mBtnSave.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
+				DOP.putInfo(DOP, mTV.getText().toString());
+				showToast("List Updated");
+			}
+		});
+       
+       mBtnList.getBackground().setAlpha(255);
+       mBtnList.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				Intent i = new Intent(getApplicationContext(), storedPhrases.class);
+				startActivity(i);
+			}
+		});
+       
        if(mSocket!=null && mSocket.isConnected()){
     	   mHandler.start();
        }
-       
-      /*check_click = new Thread(new Runnable(){
-       	@Override
-       	public void run(){
-       	    while(true){
-       	    	if(subgroup!=0){
-       	    		insertChar(group, subgroup);
-       	    		subgroup = 0;
-       	    	}
-       	    }
-       	}
-       });
-       
-       check_click.start();
        
        check_time = new Thread(new Runnable(){
        	public void run(){
@@ -221,7 +245,9 @@ public class subGroup extends ActionBarActivity {
        		long prevTime = currTime;
        		long delta;
        		int count = 0;
-       		while(true){
+       		while(true && !endOfActivity){
+       			if(mode==1 || leftActivity) continue;
+       			
        			currTime = System.currentTimeMillis();
        			delta = currTime - prevTime;
        			if(delta>1000){
@@ -229,7 +255,7 @@ public class subGroup extends ActionBarActivity {
        				final int fcount = count;
        				subGroup.this.runOnUiThread(new Runnable(){
        					public void run(){
-
+       						scrollHandler();        						
        					}
        				});
        				delta=0;
@@ -238,7 +264,7 @@ public class subGroup extends ActionBarActivity {
        		}
        	}
        });
-       check_time.start();*/
+       check_time.start();
         
        showCursor();
 	}
@@ -311,12 +337,13 @@ public class subGroup extends ActionBarActivity {
            tts.stop();
            tts.shutdown();
         }*/
-       
+        leftActivity = true;
         super.onPause();
      }
 	
 	@Override
     public void onResume(){
+		leftActivity = false;
     	super.onResume();
     }
 	
@@ -329,7 +356,7 @@ public class subGroup extends ActionBarActivity {
 	@Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.others, menu);
         return true;
     }
 
@@ -396,6 +423,16 @@ public class subGroup extends ActionBarActivity {
     }
     
 	private void showCursor(){
+		 mIV1.setBackgroundColor(Color.WHITE);
+	     mIV2.setBackgroundColor(Color.WHITE);
+	     mIV3.setBackgroundColor(Color.WHITE);
+	     mIV4.setBackgroundColor(Color.WHITE);
+	     mIV5.setBackgroundColor(Color.WHITE);
+	     mIV6.setBackgroundColor(Color.WHITE);
+	     mIV7.setBackgroundColor(Color.WHITE);
+	     mIV8.setBackgroundColor(Color.WHITE);
+	     mIV9.setBackgroundColor(Color.WHITE);
+	     
 		 mIV1.getBackground().setAlpha(25);
 	     mIV2.getBackground().setAlpha(25);
 	     mIV3.getBackground().setAlpha(25);
@@ -405,20 +442,24 @@ public class subGroup extends ActionBarActivity {
 	     mIV7.getBackground().setAlpha(25);
 	     mIV8.getBackground().setAlpha(25);
 	     mIV9.getBackground().setAlpha(25);
-
-	     mButton.getBackground().setAlpha(255);
-
+	     
+	     mButton.getBackground().setAlpha(100);
+	     mBtnSave.getBackground().setAlpha(100);
+	     mBtnList.getBackground().setAlpha(100);
 	     switch(rowPos){
 	     case FIRST:
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV1.getBackground().setAlpha(50);
+		    	 mIV1.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV2.getBackground().setAlpha(50);
+		    	 mIV2.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV3.getBackground().setAlpha(50);
+		    	 mIV3.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -430,12 +471,15 @@ public class subGroup extends ActionBarActivity {
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV4.getBackground().setAlpha(50);
+		    	 mIV4.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV5.getBackground().setAlpha(50);
+		    	 mIV5.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV6.getBackground().setAlpha(50);
+		    	 mIV6.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -447,12 +491,15 @@ public class subGroup extends ActionBarActivity {
 	    	 switch(colPos){
 		     case FIRST:
 		    	 mIV7.getBackground().setAlpha(50);
+		    	 mIV7.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case SECOND:
 		    	 mIV8.getBackground().setAlpha(50);
+		    	 mIV8.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case THIRD:
 		    	 mIV9.getBackground().setAlpha(50);
+		    	 mIV9.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
 		    	 break;
@@ -461,7 +508,13 @@ public class subGroup extends ActionBarActivity {
 		     }
 	    	 break;
 	     case SPEAKER:
-	    	 mButton.getBackground().setAlpha(150);
+	    	 mButton.getBackground().setAlpha(255);
+	    	 break;
+	     case SAVE:
+	    	 mBtnSave.getBackground().setAlpha(255);
+	    	 break;
+	     case LIST:
+	    	 mBtnList.getBackground().setAlpha(255);
 	    	 break;
 	     case ALL:
 	    	 break;
@@ -470,9 +523,39 @@ public class subGroup extends ActionBarActivity {
 	     }
 	}
 	
+	private void scrollHandler(){
+		if(colPos.equals(cursorPos.FIRST)){
+			colPos = cursorPos.SECOND;
+		}else if(colPos.equals(cursorPos.SECOND)){
+			colPos = cursorPos.THIRD;
+		}else if(colPos.equals(cursorPos.THIRD)){
+			if(rowPos.equals(cursorPos.FIRST)){
+				rowPos = cursorPos.SECOND;
+				colPos = cursorPos.FIRST;
+			}else if(rowPos.equals(cursorPos.SECOND)){
+				rowPos = cursorPos.THIRD;
+				colPos = cursorPos.FIRST;
+			}else if(rowPos.equals(cursorPos.THIRD)){
+				rowPos = cursorPos.SAVE;
+				colPos = cursorPos.SAVE;
+			}
+			
+		}else if(colPos.equals(cursorPos.SAVE)){
+			rowPos = cursorPos.LIST;
+			colPos = cursorPos.LIST;
+		}else if(colPos.equals(cursorPos.LIST)){
+			rowPos = cursorPos.SPEAKER;
+			colPos = cursorPos.SPEAKER;
+		}else if(colPos.equals(cursorPos.SPEAKER)){
+			rowPos = cursorPos.FIRST;
+			colPos = cursorPos.FIRST;
+		}
+		
+		showCursor();			
+	}
 	private void scrollHandler(String s) {
 		// TODO Auto-generated method stub
-		if(s.equals("b")){
+		if(s.equals("b")&&mode==1){
 			if(colPos.equals(cursorPos.FIRST)){
 				colPos = cursorPos.SECOND;
 			}else if(colPos.equals(cursorPos.SECOND)){
@@ -485,20 +568,37 @@ public class subGroup extends ActionBarActivity {
 					rowPos = cursorPos.THIRD;
 					colPos = cursorPos.FIRST;
 				}else if(rowPos.equals(cursorPos.THIRD)){
-					rowPos = cursorPos.SPEAKER;
-					colPos = cursorPos.SPEAKER;
+					rowPos = cursorPos.SAVE;
+					colPos = cursorPos.SAVE;
 				}
+				
+			}else if(colPos.equals(cursorPos.SAVE)){
+				rowPos = cursorPos.LIST;
+				colPos = cursorPos.LIST;
+			}else if(colPos.equals(cursorPos.LIST)){
+				rowPos = cursorPos.SPEAKER;
+				colPos = cursorPos.SPEAKER;
 			}else if(colPos.equals(cursorPos.SPEAKER)){
 				rowPos = cursorPos.FIRST;
 				colPos = cursorPos.FIRST;
 			}
 			
 			showCursor();
-		}else if(s.equals("B")){
+		}else if(s.equals("B")||(s.equals("b")&&mode==0)){
 			if(colPos.equals(cursorPos.SPEAKER)){
 				String mString = mTV.getText().toString();
 			    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
 			    return;
+			}else if(colPos.equals(cursorPos.SAVE)){
+				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
+				DOP.putInfo(DOP, mTV.getText().toString());
+				showToast("List Updated");				
+				return;
+			}else if(colPos.equals(cursorPos.LIST)){
+				final Intent i = new Intent(subGroup.this, storedPhrases.class);
+				Log.d("Main Activity", "Leaving Main to list");
+				startActivity(i);				
+				return;
 			}
 			subgroup = findSubGroup();
 			if(subgroup!=0){
@@ -571,6 +671,10 @@ public class subGroup extends ActionBarActivity {
 	@SuppressLint("NewApi") private void readMessage_async(){
 		try {
 			while(mSocket!=null && mSocket.isConnected() && !endOfActivity){
+				if(leftActivity){
+					continue;
+				}
+				
 				InputStream mmInput = mSocket.getInputStream();
 				int bytesAvailable=0;
 				//Check if data is available

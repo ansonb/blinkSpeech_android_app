@@ -13,5 +13,10 @@
         android:id="@+id/action_BT"
         android:title="BT"
         app:showAsAction="ifRoom"/>
+     
+     <item 
+         android:id="@+id/action_mode"
+         android:title="Mode"
+         app:showAsAction="ifRoom"/>
 
 </menu>
