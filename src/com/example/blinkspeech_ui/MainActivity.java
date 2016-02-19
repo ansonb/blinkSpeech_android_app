@@ -61,6 +61,8 @@ public class MainActivity extends ActionBarActivity {
 	Thread check_time;
 	Thread check_click;
 	
+	long prevTime;
+	
 	public static String mString;
 	
 	private String deviceName = "HC-05";
@@ -78,6 +80,7 @@ public class MainActivity extends ActionBarActivity {
 		FIRST,
 		SECOND,
 		THIRD,
+		FOURTH,
 		SPEAKER,
 		SAVE,
 		LIST,
@@ -120,7 +123,7 @@ public class MainActivity extends ActionBarActivity {
         
         currScroll = scrollOption.MANUAL;
         rowPos = cursorPos.FIRST;
-        colPos = cursorPos.FIRST;
+        colPos = cursorPos.ALL;
         
         mTV = (TextView) findViewById(R.id.textView1);
         mButton = (Button) findViewById(R.id.button1);
@@ -282,7 +285,7 @@ public class MainActivity extends ActionBarActivity {
     	new Thread(new Runnable(){
         	public void run(){
         		long currTime = System.currentTimeMillis();
-        		long prevTime = currTime;
+        		prevTime = currTime;
         		long delta;
         		int count = 0;
         		while(true){
@@ -291,7 +294,7 @@ public class MainActivity extends ActionBarActivity {
         			
         			currTime = System.currentTimeMillis();
         			delta = currTime - prevTime;
-        			if(delta>1000){
+        			if(delta>1500){
         				count++;
         				final int fcount = count;
         				MainActivity.this.runOnUiThread(new Runnable(){
@@ -327,6 +330,7 @@ public class MainActivity extends ActionBarActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         this.menu = menu;
+        menu.findItem(R.id.action_BT).setIcon(R.drawable.btdis);
         return true;
     }
 
@@ -354,6 +358,7 @@ public class MainActivity extends ActionBarActivity {
         	if(mSocket!=null && mSocket.isConnected()){
         		try {
 					mSocket.close();
+			        menu.findItem(R.id.action_BT).setIcon(R.drawable.btdis);					
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -367,6 +372,7 @@ public class MainActivity extends ActionBarActivity {
         		return true;
         	}else{              //If paired
         		connectBt();
+                menu.findItem(R.id.action_BT).setIcon(R.drawable.bten);        		
         	}
         	return true;
         }else if(id==R.id.action_mode){
@@ -573,6 +579,7 @@ public class MainActivity extends ActionBarActivity {
 	        			if(!mSocket.isConnected()){
 	        				mSocket = mDevice.createInsecureRfcommSocketToServiceRecord(mUUID);
 		        			mSocket.connect();
+		        	        menu.findItem(R.id.action_BT).setIcon(R.drawable.bten);		        			
 	        			}
 	        			
 						new Thread(new Runnable(){
@@ -598,6 +605,7 @@ public class MainActivity extends ActionBarActivity {
 	           //Device has disconnected
 	        	try{
 	        		mSocket.close();
+	                menu.findItem(R.id.action_BT).setIcon(R.drawable.btdis);
 	        		mStatus = Status.DISCONNECTED;
 	        		showToast("Device Disconnected");
 	        	}catch(Exception e){
@@ -721,6 +729,12 @@ public class MainActivity extends ActionBarActivity {
 		    	 mIV3.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
+		    	 mIV1.getBackground().setAlpha(50);
+		    	 mIV1.setBackgroundColor(Color.CYAN);
+		    	 mIV2.getBackground().setAlpha(50);
+		    	 mIV2.setBackgroundColor(Color.CYAN);
+		    	 mIV3.getBackground().setAlpha(50);
+		    	 mIV3.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     default:
 		    	 break;
@@ -741,6 +755,12 @@ public class MainActivity extends ActionBarActivity {
 		    	 mIV6.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
+		    	 mIV4.getBackground().setAlpha(50);
+		    	 mIV4.setBackgroundColor(Color.CYAN);
+		    	 mIV5.getBackground().setAlpha(50);
+		    	 mIV5.setBackgroundColor(Color.CYAN);
+		    	 mIV6.getBackground().setAlpha(50);
+		    	 mIV6.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     default:
 		    	 break;
@@ -761,10 +781,36 @@ public class MainActivity extends ActionBarActivity {
 		    	 mIV9.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     case ALL:
+		    	 mIV7.getBackground().setAlpha(50);
+		    	 mIV7.setBackgroundColor(Color.CYAN);
+		    	 mIV8.getBackground().setAlpha(50);
+		    	 mIV8.setBackgroundColor(Color.CYAN);
+		    	 mIV9.getBackground().setAlpha(50);
+		    	 mIV9.setBackgroundColor(Color.CYAN);
 		    	 break;
 		     default:
 		    	 break;
 		     }
+	    	 break;
+	     case FOURTH:
+	    	 switch(colPos){
+	    	 case FIRST:
+	    		 mBtnSave.getBackground().setAlpha(255);
+	    		 break;
+	    	 case SECOND:
+	    		 mBtnList.getBackground().setAlpha(255);
+	    		 break;
+	    	 case THIRD:
+	    		 mButton.getBackground().setAlpha(255);
+	    		 break;
+	    	 case ALL:
+	    		 mBtnSave.getBackground().setAlpha(255);
+	    		 mBtnList.getBackground().setAlpha(255);
+	    		 mButton.getBackground().setAlpha(255);
+	    		 break;
+	    	 default:
+	    		 break;
+	    	 }
 	    	 break;
 	     case SPEAKER:
 	    	 mButton.getBackground().setAlpha(255);
@@ -783,7 +829,26 @@ public class MainActivity extends ActionBarActivity {
 	}
 	
 	private void scrollHandler(){
-		if(colPos.equals(cursorPos.FIRST)){
+		if(colPos.equals(cursorPos.ALL)){
+			if(rowPos.equals(cursorPos.FIRST)){
+				rowPos = cursorPos.SECOND;
+			}else if(rowPos.equals(cursorPos.SECOND)){
+				rowPos = cursorPos.THIRD;
+			}else if(rowPos.equals(cursorPos.THIRD)){
+				rowPos = cursorPos.FOURTH;
+			}else if(rowPos.equals(cursorPos.FOURTH)){
+				rowPos = cursorPos.FIRST;
+			}				
+		}else{
+			if(colPos.equals(cursorPos.FIRST)){
+				colPos = cursorPos.SECOND;
+			}else if(colPos.equals(cursorPos.SECOND)){
+				colPos = cursorPos.THIRD;
+			}else if(colPos.equals(cursorPos.THIRD)){
+				colPos = cursorPos.ALL;
+			}
+		}
+		/*if(colPos.equals(cursorPos.FIRST)){
 			colPos = cursorPos.SECOND;
 		}else if(colPos.equals(cursorPos.SECOND)){
 			colPos = cursorPos.THIRD;
@@ -808,7 +873,7 @@ public class MainActivity extends ActionBarActivity {
 		}else if(colPos.equals(cursorPos.SPEAKER)){
 			rowPos = cursorPos.FIRST;
 			colPos = cursorPos.FIRST;
-		}
+		}*/
 		
 		showCursor();		
 	}
@@ -816,7 +881,26 @@ public class MainActivity extends ActionBarActivity {
 	private void scrollHandler(String s) {
 		// TODO Auto-generated method stub
 		if(s.equals("b") && mode==1){
-			if(colPos.equals(cursorPos.FIRST)){
+			if(colPos.equals(cursorPos.ALL)){
+				if(rowPos.equals(cursorPos.FIRST)){
+					rowPos = cursorPos.SECOND;
+				}else if(rowPos.equals(cursorPos.SECOND)){
+					rowPos = cursorPos.THIRD;
+				}else if(rowPos.equals(cursorPos.THIRD)){
+					rowPos = cursorPos.FOURTH;
+				}else if(rowPos.equals(cursorPos.FOURTH)){
+					rowPos = cursorPos.FIRST;
+				}				
+			}else{
+				if(colPos.equals(cursorPos.FIRST)){
+					colPos = cursorPos.SECOND;
+				}else if(colPos.equals(cursorPos.SECOND)){
+					colPos = cursorPos.THIRD;
+				}else if(colPos.equals(cursorPos.THIRD)){
+					colPos = cursorPos.ALL;
+				}
+			}			
+			/*if(colPos.equals(cursorPos.FIRST)){
 				colPos = cursorPos.SECOND;
 			}else if(colPos.equals(cursorPos.SECOND)){
 				colPos = cursorPos.THIRD;
@@ -841,11 +925,38 @@ public class MainActivity extends ActionBarActivity {
 			}else if(colPos.equals(cursorPos.SPEAKER)){
 				rowPos = cursorPos.FIRST;
 				colPos = cursorPos.FIRST;
-			}
+			}*/
 			
 			showCursor();
 		}else if(s.equals("B")||(s.equals("b")&&mode==0)){
-			if(colPos.equals(cursorPos.SPEAKER)){
+			if(colPos.equals(cursorPos.ALL)){
+				colPos = cursorPos.FIRST;
+				showCursor();
+			}else{
+				if(rowPos.equals(cursorPos.FOURTH)){
+					if(colPos.equals(cursorPos.THIRD)){
+						String mString = mTV.getText().toString();
+					    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
+					    return;
+					}else if(colPos.equals(cursorPos.FIRST)){
+						DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
+						DOP.putInfo(DOP, mTV.getText().toString());
+						showToast("List Updated");				
+						return;
+					}else if(colPos.equals(cursorPos.SECOND)){
+						final Intent i = new Intent(MainActivity.this, storedPhrases.class);
+						Log.d("Main Activity", "Leaving Main to list");
+						startActivity(i);				
+						return;
+					}					
+				}
+
+				group = findGroup();
+				if(group!=0){
+					openSubGroup();				
+			     }
+			}
+			/*if(colPos.equals(cursorPos.SPEAKER)){
 				String mString = mTV.getText().toString();
 			    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
 			    return;
@@ -863,7 +974,9 @@ public class MainActivity extends ActionBarActivity {
 			group = findGroup();
 			if(group!=0){
 				openSubGroup();
-			}
+			}*/
+			
+			prevTime = System.currentTimeMillis();
 		}else if(s.equals("a")){
 			
 		}

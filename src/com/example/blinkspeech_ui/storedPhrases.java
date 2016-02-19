@@ -63,6 +63,7 @@ public class storedPhrases extends ActionBarActivity{
 		Log.d("storedPhrases", "set layout");
 		lv = (ListView)findViewById(R.id.listView1);
 		lv.setLongClickable(true);
+		lv.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 		
 		DOP = new DatabaseOperations(storedPhrases.this);
 		displayList();
@@ -140,6 +141,7 @@ public class storedPhrases extends ActionBarActivity{
 					public void onClick(DialogInterface dialog, int id) {
 						DOP.delete(DOP, list.get(pos).toString());
 						displayList();
+						scrollCursorPos = 0;
 					}
                 	
                 }).show();
@@ -151,15 +153,16 @@ public class storedPhrases extends ActionBarActivity{
 	private void displayList() {
 		list = new ArrayList<String>();
 		
+		list.add("Return");
 		Cursor CR = DOP.getInfo(DOP);
 		Log.d("phrase", "Got CR");
-		if(CR.moveToFirst()){
+		if(CR.moveToLast()){
 			do{
 				list.add(CR.getString(0));
 				Log.d("phrase", "added "+CR.getString(0));
-			}while(CR.moveToNext());
+			}while(CR.moveToPrevious());
 		}
-		list.add("Return");
+		
 		Log.d("phrase", "added return");
 		lvAdapter = new ArrayAdapter<String>(this,
     	        android.R.layout.simple_list_item_1, list);
@@ -260,16 +263,27 @@ public class storedPhrases extends ActionBarActivity{
 	}
 	
 	private void scrollToNext(){
-		scrollCursorPos = (scrollCursorPos+1)%(list.size());
+		//scrollCursorPos = (scrollCursorPos+1)%(list.size());
+		scrollCursorPos = (scrollCursorPos+1)%(lv.getLastVisiblePosition()+1);
 		highlightPos(scrollCursorPos);
 	}
 
 	private void highlightPos(int scrollCursorPos2) {
 		// TODO Auto-generated method stub
-		for(int i=0;i<list.size();i++){
-			lv.getChildAt(i).setBackgroundColor(color.transparent);
+		/*for(int i=0;i<list.size();i++){
+			//lv.setSelection(i);
+			//lv.getChildAt(i).setBackgroundColor(color.transparent);
+		}*/
+		int prev_pos = (lv.getLastVisiblePosition() + scrollCursorPos2)%(lv.getLastVisiblePosition()+1);
+		while(lv.getLastVisiblePosition()<prev_pos){
+			lv.setSelection(prev_pos);
 		}
-		lv.getChildAt(scrollCursorPos).setBackgroundColor(Color.CYAN);
+		lv.getChildAt(prev_pos).setBackgroundColor(Color.TRANSPARENT);
+		
+		while(lv.getLastVisiblePosition()<scrollCursorPos2){
+			lv.setSelection(scrollCursorPos2);
+		}
+		lv.getChildAt(scrollCursorPos2).setBackgroundColor(Color.CYAN);
 	}
 	
 	private void selCursor(){
