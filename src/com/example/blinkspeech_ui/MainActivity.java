@@ -7,11 +7,15 @@ import java.lang.reflect.Method;
 import java.sql.Date;
 import java.util.*;
 
-import com.example.blinkspeech_ui.BluetoothClass.Status;
-
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.annotation.SuppressLint;
+import android.app.Instrumentation;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -21,16 +25,20 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.DataSetObserver;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +55,7 @@ public class MainActivity extends ActionBarActivity {
 	TextView mIV8;
 	TextView mIV9;
 	
-	TextView mTV;
+	MultiAutoCompleteTextView mTV;
 	Button mButton;
 	
 	TextToSpeech tts;
@@ -63,13 +71,11 @@ public class MainActivity extends ActionBarActivity {
 	
 	long prevTime;
 	
-	public static String mString;
+	public static String mString="";
 	
 	private String deviceName = "HC-05";
 	private UUID mUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-	
-	private BluetoothClass btClass;
-	
+		
 	enum Status{
 		DISCONNECTED,
 		PAIRED,
@@ -81,6 +87,7 @@ public class MainActivity extends ActionBarActivity {
 		SECOND,
 		THIRD,
 		FOURTH,
+		FIFTH,
 		SPEAKER,
 		SAVE,
 		LIST,
@@ -115,17 +122,32 @@ public class MainActivity extends ActionBarActivity {
 	static public int totalModes=2;
 	
 	Button mBtnSave, mBtnList;
+	
+	TextView autoComplete1,autoComplete2,autoComplete3;
 		
+	String[] arr1;
+    String[] arr= {"Hello", "Anson", "Siddharth", "Good", "Thankyou", "Welcome", "Morning", 
+    		        "Water", "Food", "Toilet", "Hi", "Abhishek", "Pravin", "Shubham", "blinkspeech"}; 
+	public static Trie mTrie = new Trie();
+	List<String> hintList;
+    String firstHint, secondHint, thirdHint;	
+	
+	
+	
     @SuppressLint("NewApi") @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
+    	String[] arr1 = this.getResources().getStringArray(R.array.autoCompleteDictionary);
+        
+        mTrie.addArray(arr1);
+        
         currScroll = scrollOption.MANUAL;
         rowPos = cursorPos.FIRST;
         colPos = cursorPos.ALL;
         
-        mTV = (TextView) findViewById(R.id.textView1);
+        mTV = (MultiAutoCompleteTextView) findViewById(R.id.textView1);
         mButton = (Button) findViewById(R.id.button1);
         mBtnSave = (Button)findViewById(R.id.storeInDB);
         mBtnList = (Button)findViewById(R.id.goToList);
@@ -143,11 +165,19 @@ public class MainActivity extends ActionBarActivity {
         mIV8 = (TextView) findViewById(R.id.vwx8);
         mIV9 = (TextView) findViewById(R.id.yz90); 
         
+        autoComplete1 = (TextView) findViewById(R.id.autocomplete1);
+        autoComplete2 = (TextView) findViewById(R.id.autocomplete2);
+        autoComplete3 = (TextView) findViewById(R.id.autocomplete3);
+        
+        autoComplete1.setText("");
+        autoComplete2.setText("");
+        autoComplete3.setText("");
+        
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
         width = size.x-48;
-        height = size.y-200;
+        height = size.y-260;
         
         mIV1.setHeight(height/3);
         mIV2.setHeight(height/3);
@@ -180,7 +210,90 @@ public class MainActivity extends ActionBarActivity {
         mIV9.getBackground().setAlpha(25);
         
         mTV.setWidth(width-90);
+        
+        autoComplete1.setWidth(width/3) ;
+        autoComplete2.setWidth(width/3) ;
+        autoComplete3.setWidth(width/3) ;
 
+        
+        mTV.addTextChangedListener(new TextWatcher(){
+
+			@Override
+			public void afterTextChanged(Editable arg0) {
+				String fullText = mTV.getText().toString();
+				String currWord;
+				//get the string after last space
+				int lastSpaceIndex = -1;
+				
+				if(fullText.length()==0) return;
+				
+				for(int i=fullText.length()-1;i>=0;--i){
+					if(fullText.charAt(i)==' '){
+						//showToast("Space at "+i);
+						lastSpaceIndex = i;
+						break;
+					}
+				}
+				if(lastSpaceIndex==-1){
+					currWord = fullText;
+				}else if(lastSpaceIndex==fullText.length()-1){ 
+					currWord = "a";
+				}else{
+					currWord = fullText.substring(lastSpaceIndex+1);
+				}
+				
+				//showToast(currWord+" "+fullText+" "+Integer.toString(lastSpaceIndex));
+				Log.d("currWord", currWord);
+				Log.d("lastSpaceIndex", Integer.toString(lastSpaceIndex));
+				
+				hintList = mTrie.getWords(currWord);
+				
+                firstHint = "";
+                secondHint = "";
+                thirdHint = "";				
+				
+                int noOfHints = (3<=hintList.size())?3:hintList.size();
+                int count = 0;
+                if(hintList.size()>0){
+                	while(count<noOfHints){
+                		switch(count){
+                		case 0:
+                			firstHint = hintList.get(0);
+                			break;
+                		case 1:
+                			secondHint = hintList.get(1);
+                			break;
+                		case 2:
+                			thirdHint = hintList.get(2);
+                			break;
+                	    default:
+                			break;
+                		}
+                		++count;
+                	}
+              	  
+                    Log.d("tag", "item.toString "+ firstHint);
+                }
+               
+                autoComplete1.setText(firstHint);
+                autoComplete2.setText(secondHint);
+                autoComplete3.setText(thirdHint);                  
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence arg0, int arg1,
+					int arg2, int arg3) {
+				
+			}
+
+			@Override
+			public void onTextChanged(CharSequence arg0, int arg1, int arg2,
+					int arg3) {
+				//showToast("text changed");
+				}
+        	
+        });  
+        
         tts = new TextToSpeech(getApplicationContext(),new TextToSpeech.OnInitListener(){
         	@Override
         	public void onInit(int status){
@@ -278,6 +391,7 @@ public class MainActivity extends ActionBarActivity {
         //start_autoScroll();
         
         showCursor();
+        
     }
     
     //TODO check if multiple copies created while alive
@@ -322,6 +436,7 @@ public class MainActivity extends ActionBarActivity {
     	super.onResume();
     	leftActivity = false;
     	mTV.setText(mString);
+    	mTV.setSelection(mTV.getText().length());
     }
 
 
@@ -712,6 +827,11 @@ public class MainActivity extends ActionBarActivity {
 	     mButton.getBackground().setAlpha(100);
 	     mBtnSave.getBackground().setAlpha(100);
 	     mBtnList.getBackground().setAlpha(100);
+	     
+	     autoComplete1.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     autoComplete2.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     autoComplete3.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     
 
 	     switch(rowPos){
 	     case FIRST:
@@ -795,6 +915,26 @@ public class MainActivity extends ActionBarActivity {
 	     case FOURTH:
 	    	 switch(colPos){
 	    	 case FIRST:
+	    	     autoComplete1.setBackgroundResource(R.drawable.rounded_corners_black);
+	    		 break;
+	    	 case SECOND:
+	    	     autoComplete2.setBackgroundResource(R.drawable.rounded_corners_black);
+	    		 break;
+	    	 case THIRD:
+	    	     autoComplete3.setBackgroundResource(R.drawable.rounded_corners_black);	   		 
+	    		 break;
+	    	 case ALL:
+	    	     autoComplete1.setBackgroundResource(R.drawable.rounded_corners_black);
+	    	     autoComplete2.setBackgroundResource(R.drawable.rounded_corners_black);
+	    	     autoComplete3.setBackgroundResource(R.drawable.rounded_corners_black);	   		 
+	    		 break;
+	    	 default:
+	    		 break;
+	    	 }
+	    	 break;
+	     case FIFTH:
+	    	 switch(colPos){
+	    	 case FIRST:
 	    		 mBtnSave.getBackground().setAlpha(255);
 	    		 break;
 	    	 case SECOND:
@@ -837,8 +977,10 @@ public class MainActivity extends ActionBarActivity {
 			}else if(rowPos.equals(cursorPos.THIRD)){
 				rowPos = cursorPos.FOURTH;
 			}else if(rowPos.equals(cursorPos.FOURTH)){
+				rowPos = cursorPos.FIFTH;
+			}else if(rowPos.equals(cursorPos.FIFTH)){
 				rowPos = cursorPos.FIRST;
-			}				
+			}
 		}else{
 			if(colPos.equals(cursorPos.FIRST)){
 				colPos = cursorPos.SECOND;
@@ -848,32 +990,6 @@ public class MainActivity extends ActionBarActivity {
 				colPos = cursorPos.ALL;
 			}
 		}
-		/*if(colPos.equals(cursorPos.FIRST)){
-			colPos = cursorPos.SECOND;
-		}else if(colPos.equals(cursorPos.SECOND)){
-			colPos = cursorPos.THIRD;
-		}else if(colPos.equals(cursorPos.THIRD)){
-			if(rowPos.equals(cursorPos.FIRST)){
-				rowPos = cursorPos.SECOND;
-				colPos = cursorPos.FIRST;
-			}else if(rowPos.equals(cursorPos.SECOND)){
-				rowPos = cursorPos.THIRD;
-				colPos = cursorPos.FIRST;
-			}else if(rowPos.equals(cursorPos.THIRD)){
-				rowPos = cursorPos.SAVE;
-				colPos = cursorPos.SAVE;
-			}
-			
-		}else if(colPos.equals(cursorPos.SAVE)){
-			rowPos = cursorPos.LIST;
-			colPos = cursorPos.LIST;
-		}else if(colPos.equals(cursorPos.LIST)){
-			rowPos = cursorPos.SPEAKER;
-			colPos = cursorPos.SPEAKER;
-		}else if(colPos.equals(cursorPos.SPEAKER)){
-			rowPos = cursorPos.FIRST;
-			colPos = cursorPos.FIRST;
-		}*/
 		
 		showCursor();		
 	}
@@ -889,6 +1005,8 @@ public class MainActivity extends ActionBarActivity {
 				}else if(rowPos.equals(cursorPos.THIRD)){
 					rowPos = cursorPos.FOURTH;
 				}else if(rowPos.equals(cursorPos.FOURTH)){
+					rowPos = cursorPos.FIFTH;
+				}else if(rowPos.equals(cursorPos.FIFTH)){
 					rowPos = cursorPos.FIRST;
 				}				
 			}else{
@@ -899,33 +1017,7 @@ public class MainActivity extends ActionBarActivity {
 				}else if(colPos.equals(cursorPos.THIRD)){
 					colPos = cursorPos.ALL;
 				}
-			}			
-			/*if(colPos.equals(cursorPos.FIRST)){
-				colPos = cursorPos.SECOND;
-			}else if(colPos.equals(cursorPos.SECOND)){
-				colPos = cursorPos.THIRD;
-			}else if(colPos.equals(cursorPos.THIRD)){
-				if(rowPos.equals(cursorPos.FIRST)){
-					rowPos = cursorPos.SECOND;
-					colPos = cursorPos.FIRST;
-				}else if(rowPos.equals(cursorPos.SECOND)){
-					rowPos = cursorPos.THIRD;
-					colPos = cursorPos.FIRST;
-				}else if(rowPos.equals(cursorPos.THIRD)){
-					rowPos = cursorPos.SAVE;
-					colPos = cursorPos.SAVE;
-				}
-				
-			}else if(colPos.equals(cursorPos.SAVE)){
-				rowPos = cursorPos.LIST;
-				colPos = cursorPos.LIST;
-			}else if(colPos.equals(cursorPos.LIST)){
-				rowPos = cursorPos.SPEAKER;
-				colPos = cursorPos.SPEAKER;
-			}else if(colPos.equals(cursorPos.SPEAKER)){
-				rowPos = cursorPos.FIRST;
-				colPos = cursorPos.FIRST;
-			}*/
+			}	
 			
 			showCursor();
 		}else if(s.equals("B")||(s.equals("b")&&mode==0)){
@@ -933,7 +1025,7 @@ public class MainActivity extends ActionBarActivity {
 				colPos = cursorPos.FIRST;
 				showCursor();
 			}else{
-				if(rowPos.equals(cursorPos.FOURTH)){
+				if(rowPos.equals(cursorPos.FIFTH)){
 					if(colPos.equals(cursorPos.THIRD)){
 						String mString = mTV.getText().toString();
 					    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
@@ -949,6 +1041,16 @@ public class MainActivity extends ActionBarActivity {
 						startActivity(i);				
 						return;
 					}					
+				}else if(rowPos.equals(cursorPos.FOURTH)){
+					if(colPos.equals(cursorPos.FIRST)){
+						completeLastWord(firstHint);
+					}else if(colPos.equals(cursorPos.SECOND)){
+						completeLastWord(secondHint);
+					}else if(colPos.equals(cursorPos.THIRD)){
+						completeLastWord(thirdHint);
+					}
+					
+					return;
 				}
 
 				group = findGroup();
@@ -956,25 +1058,6 @@ public class MainActivity extends ActionBarActivity {
 					openSubGroup();				
 			     }
 			}
-			/*if(colPos.equals(cursorPos.SPEAKER)){
-				String mString = mTV.getText().toString();
-			    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
-			    return;
-			}else if(colPos.equals(cursorPos.SAVE)){
-				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
-				DOP.putInfo(DOP, mTV.getText().toString());
-				showToast("List Updated");				
-				return;
-			}else if(colPos.equals(cursorPos.LIST)){
-				final Intent i = new Intent(MainActivity.this, storedPhrases.class);
-				Log.d("Main Activity", "Leaving Main to list");
-				startActivity(i);				
-				return;
-			}
-			group = findGroup();
-			if(group!=0){
-				openSubGroup();
-			}*/
 			
 			prevTime = System.currentTimeMillis();
 		}else if(s.equals("a")){
@@ -1039,5 +1122,65 @@ public class MainActivity extends ActionBarActivity {
 	
 	public void scanDevice(){
 		mBluetoothAdapter.startDiscovery();
+	}
+	
+	public void onClickAC1(View v){
+		completeLastWord(firstHint);
+	}
+	
+	public void onClickAC2(View v){
+		completeLastWord(secondHint);
+	}
+	
+	public void onClickAC3(View v){
+		completeLastWord(thirdHint);
+	}
+	
+	public void completeLastWord(String s){
+		if(s==null) return;
+		if(s.equals("")) return;
+		
+		int posToInsert = givePosOfLastWord();
+		String fullText = mTV.getText().toString();
+		
+		String strBeforeLastSpace = "" ;
+		if(posToInsert>0){
+			strBeforeLastSpace = fullText.substring(0, posToInsert);
+		}
+		
+		String completedText = strBeforeLastSpace + s;
+		
+		mTV.setText(completedText+" ");
+		mTV.setSelection(mTV.getText().length());
+		mString = mTV.getText().toString();
+	}
+
+	private String lastWord(int posToInsert) {
+		String fullText = mTV.getText().toString();
+		String currWord;
+		
+		if(posToInsert==fullText.length()){ 
+			currWord = "a";
+		}else{
+			currWord = fullText.substring(posToInsert);
+		}
+		return currWord;
+	}
+
+	private int givePosOfLastWord() {
+		String fullText = mTV.getText().toString();
+		//get the string after last space
+		int lastSpaceIndex = -1;
+		
+		if(fullText.length()==0) return 0;
+		
+		for(int i=fullText.length()-1;i>=0;--i){
+			if(fullText.charAt(i)==' '){
+				lastSpaceIndex = i;
+				break;
+			}
+		}		
+		
+		return lastSpaceIndex+1;
 	}
 }

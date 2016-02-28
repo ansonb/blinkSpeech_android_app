@@ -2,6 +2,7 @@ package com.example.blinkspeech_ui;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Locale;
 
 import com.example.blinkspeech_ui.MainActivity.cursorPos;
@@ -22,6 +23,7 @@ import android.speech.tts.TextToSpeech;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.Selection;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
@@ -29,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.MultiAutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,27 +49,19 @@ public class subGroup extends ActionBarActivity {
 	TextView mIV8;
 	TextView mIV9;
 	
-	TextView mTV;
+	MultiAutoCompleteTextView mTV;
 	Button mButton;
 	
 	BluetoothSocket mSocket = MainActivity.mSocket;
 	
 	long prevTime;
 	
+	TextView autoComplete1,autoComplete2,autoComplete3;
+	
 	Thread mHandler = new Thread(new Runnable(){
 	   @Override	
  	   public void run(){
  			   readMessage_async();
- 			   /*if(subGroup.messageReceived){
- 				   subGroup.this.runOnUiThread(new Runnable(){
- 					   public void run(){
- 						  showToast(mReceived + "Message Received");
- 		     			  subGroup.messageReceived = false;
- 		     			   //scrollHandler(mReceived); 
- 					   }
- 				   });
- 				   
-     		   }*/
  	   }
     });
 	
@@ -81,6 +76,7 @@ public class subGroup extends ActionBarActivity {
 		SECOND,
 		THIRD,
 		FOURTH,
+		FIFTH,
 		SPEAKER,
 		SAVE,
 		LIST,
@@ -129,6 +125,10 @@ public class subGroup extends ActionBarActivity {
 	int group=0;
 	int subgroup=0;
 	
+	Trie mTrie = MainActivity.mTrie;
+	List<String> hintList;
+	String firstHint, secondHint, thirdHint;
+	
 	public subGroup(){
 		
 	}
@@ -145,7 +145,7 @@ public class subGroup extends ActionBarActivity {
         colPos = cursorPos.ALL;
         
         
-        mTV = (TextView) findViewById(R.id.textView1);
+        mTV = (MultiAutoCompleteTextView) findViewById(R.id.textView1);
         mButton = (Button) findViewById(R.id.button1);
         mBtnSave = (Button)findViewById(R.id.storeInDB);
         mBtnList = (Button)findViewById(R.id.goToList);
@@ -164,6 +164,14 @@ public class subGroup extends ActionBarActivity {
         mIV7 = (TextView) findViewById(R.id.stu7);
         mIV8 = (TextView) findViewById(R.id.vwx8);
         mIV9 = (TextView) findViewById(R.id.yz90);
+        
+        autoComplete1 = (TextView) findViewById(R.id.autocomplete1);
+        autoComplete2 = (TextView) findViewById(R.id.autocomplete2);
+        autoComplete3 = (TextView) findViewById(R.id.autocomplete3);        
+        
+        autoComplete1.setText("");
+        autoComplete2.setText("");
+        autoComplete3.setText("");
         
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
@@ -193,7 +201,92 @@ public class subGroup extends ActionBarActivity {
         
         mTV.setWidth(width-90);
         
+        autoComplete1.setWidth(width/3) ;
+        autoComplete2.setWidth(width/3) ; 
+        autoComplete3.setWidth(width/3);
+        
         setSubGroupText();
+        
+        mTV.addTextChangedListener(new TextWatcher(){
+
+			@Override
+			public void afterTextChanged(Editable arg0) {
+				String fullText = mTV.getText().toString();
+				String currWord;
+				//get the string after last space
+				int lastSpaceIndex = -1;
+				
+				if(fullText.length()==0) return;
+				
+				for(int i=fullText.length()-1;i>=0;--i){
+					if(fullText.charAt(i)==' '){
+						//showToast("Space at "+i);
+						lastSpaceIndex = i;
+						break;
+					}
+				}
+				if(lastSpaceIndex==-1){
+					currWord = fullText;
+				}else if(lastSpaceIndex==fullText.length()-1){ 
+					currWord = "a";
+				}else{
+					currWord = fullText.substring(lastSpaceIndex+1);
+				}
+				
+				
+				//showToast(currWord+" "+fullText+" "+Integer.toString(lastSpaceIndex));
+				Log.d("currWord", currWord);
+				Log.d("lastSpaceIndex", Integer.toString(lastSpaceIndex));
+				
+				hintList = mTrie.getWords(currWord);
+				
+                firstHint = "";
+                secondHint = "";
+                thirdHint = "";				
+				
+                int noOfHints = (3<=hintList.size())?3:hintList.size();
+                int count = 0;
+                if(hintList.size()>0){
+                	while(count<noOfHints){
+                		switch(count){
+                		case 0:
+                			firstHint = hintList.get(0);
+                			break;
+                		case 1:
+                			secondHint = hintList.get(1);
+                			break;
+                		case 2:
+                			thirdHint = hintList.get(2);
+                			break;
+                	    default:
+                			break;
+                		}
+                		++count;
+                	}
+              	  
+                    Log.d("tag", "item.toString "+ firstHint);
+                }
+               
+                autoComplete1.setText(firstHint);
+                autoComplete2.setText(secondHint);
+                autoComplete3.setText(thirdHint);   
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence arg0, int arg1,
+					int arg2, int arg3) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onTextChanged(CharSequence arg0, int arg1, int arg2,
+					int arg3) {
+				// TODO Auto-generated method stub
+				
+			}
+        	
+        });
         
         tts = new TextToSpeech(getApplicationContext(),new TextToSpeech.OnInitListener(){
         	@Override
@@ -273,14 +366,6 @@ public class subGroup extends ActionBarActivity {
 	}
 	
 	@SuppressLint("NewApi") private void setSubGroupText(){
-		/*Bitmap back = BitmapFactory.decodeResource(getResources(), R.drawable.back);
-		back = Bitmap.createScaledBitmap(back, 25, 15, false);
-		
-		Bitmap spacebar = BitmapFactory.decodeResource(getResources(), R.drawable.space);
-		spacebar = Bitmap.createScaledBitmap(spacebar, 25, 15, false);
-		
-		Bitmap delete = BitmapFactory.decodeResource(getResources(), R.drawable.delete);
-		delete = Bitmap.createScaledBitmap(delete, 25, 15, false);*/
 		
 		mIV1.setText(Character.toString(keyBoard[group-1][0]));
 		mIV2.setText(Character.toString(keyBoard[group-1][1]));
@@ -292,13 +377,6 @@ public class subGroup extends ActionBarActivity {
 		mIV8.setText(Character.toString(keyBoard[group-1][7]));
 		mIV9.setText("BACKSPACE");
 		
-		/*mIV5.setBackground(new BitmapDrawable(getResources(), back));
-		mIV7.setBackground(new BitmapDrawable(getResources(), spacebar));
-		mIV9.setBackground(new BitmapDrawable(getResources(), delete));*/
-		
-		/*mIV5.setBackgroundResource(R.drawable.back);
-		mIV7.setBackgroundResource(R.drawable.space);
-		mIV9.setBackgroundResource(R.drawable.delete);*/
 	}
 	
 	private void insertChar(int gr, int subGr){
@@ -333,13 +411,8 @@ public class subGroup extends ActionBarActivity {
 		});
 	}
 	
-	@SuppressWarnings("deprecation")
 	@Override
     public void onPause(){
-        /*if(tts !=null){
-           tts.stop();
-           tts.shutdown();
-        }*/
         leftActivity = true;
         super.onPause();
      }
@@ -347,6 +420,8 @@ public class subGroup extends ActionBarActivity {
 	@Override
     public void onResume(){
 		leftActivity = false;
+		mTV.setText(MainActivity.mString);
+		mTV.setSelection(mTV.getText().length());
     	super.onResume();
     }
 	
@@ -449,6 +524,11 @@ public class subGroup extends ActionBarActivity {
 	     mButton.getBackground().setAlpha(100);
 	     mBtnSave.getBackground().setAlpha(100);
 	     mBtnList.getBackground().setAlpha(100);
+	     
+	     autoComplete1.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     autoComplete2.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     autoComplete3.setBackgroundResource(R.drawable.rounded_corners_gray);
+	     
 	     switch(rowPos){
 	     case FIRST:
 	    	 switch(colPos){
@@ -531,6 +611,26 @@ public class subGroup extends ActionBarActivity {
 	     case FOURTH:
 	    	 switch(colPos){
 	    	 case FIRST:
+	    		 autoComplete1.setBackgroundResource(R.drawable.rounded_corners_black);
+	    		 break;
+	    	 case SECOND:
+	    		 autoComplete2.setBackgroundResource(R.drawable.rounded_corners_black);
+	    		 break;
+	    	 case THIRD:
+	    		 autoComplete3.setBackgroundResource(R.drawable.rounded_corners_black);
+	    		 break;
+	    	 case ALL:
+	    	     autoComplete1.setBackgroundResource(R.drawable.rounded_corners_black);
+	    	     autoComplete2.setBackgroundResource(R.drawable.rounded_corners_black);
+	    	     autoComplete3.setBackgroundResource(R.drawable.rounded_corners_black);	    		 
+	    		 break;
+	    	 default:
+	    		 break;
+	    	 }
+	    	 break;	    	 
+	     case FIFTH:
+	    	 switch(colPos){
+	    	 case FIRST:
 	    		 mBtnSave.getBackground().setAlpha(255);
 	    		 break;
 	    	 case SECOND:
@@ -573,8 +673,10 @@ public class subGroup extends ActionBarActivity {
 			}else if(rowPos.equals(cursorPos.THIRD)){
 				rowPos = cursorPos.FOURTH;
 			}else if(rowPos.equals(cursorPos.FOURTH)){
+				rowPos = cursorPos.FIFTH;
+			}else if(rowPos.equals(cursorPos.FIFTH)){
 				rowPos = cursorPos.FIRST;
-			}				
+			}			
 		}else{
 			if(colPos.equals(cursorPos.FIRST)){
 				colPos = cursorPos.ALL;
@@ -584,32 +686,6 @@ public class subGroup extends ActionBarActivity {
 				colPos = cursorPos.FIRST;
 			}
 		}		
-		/*if(colPos.equals(cursorPos.FIRST)){
-			colPos = cursorPos.SECOND;
-		}else if(colPos.equals(cursorPos.SECOND)){
-			colPos = cursorPos.THIRD;
-		}else if(colPos.equals(cursorPos.THIRD)){
-			if(rowPos.equals(cursorPos.FIRST)){
-				rowPos = cursorPos.SECOND;
-				colPos = cursorPos.FIRST;
-			}else if(rowPos.equals(cursorPos.SECOND)){
-				rowPos = cursorPos.THIRD;
-				colPos = cursorPos.FIRST;
-			}else if(rowPos.equals(cursorPos.THIRD)){
-				rowPos = cursorPos.SAVE;
-				colPos = cursorPos.SAVE;
-			}
-			
-		}else if(colPos.equals(cursorPos.SAVE)){
-			rowPos = cursorPos.LIST;
-			colPos = cursorPos.LIST;
-		}else if(colPos.equals(cursorPos.LIST)){
-			rowPos = cursorPos.SPEAKER;
-			colPos = cursorPos.SPEAKER;
-		}else if(colPos.equals(cursorPos.SPEAKER)){
-			rowPos = cursorPos.FIRST;
-			colPos = cursorPos.FIRST;
-		}*/
 		
 		showCursor();			
 	}
@@ -624,6 +700,8 @@ public class subGroup extends ActionBarActivity {
 				}else if(rowPos.equals(cursorPos.THIRD)){
 					rowPos = cursorPos.FOURTH;
 				}else if(rowPos.equals(cursorPos.FOURTH)){
+					rowPos = cursorPos.FIFTH;
+				}else if(rowPos.equals(cursorPos.FIFTH)){
 					rowPos = cursorPos.FIRST;
 				}				
 			}else{
@@ -635,32 +713,6 @@ public class subGroup extends ActionBarActivity {
 					colPos = cursorPos.FIRST;
 				}
 			}
-			/*if(colPos.equals(cursorPos.FIRST)){
-				colPos = cursorPos.SECOND;
-			}else if(colPos.equals(cursorPos.SECOND)){
-				colPos = cursorPos.THIRD;
-			}else if(colPos.equals(cursorPos.THIRD)){
-				if(rowPos.equals(cursorPos.FIRST)){
-					rowPos = cursorPos.SECOND;
-					colPos = cursorPos.FIRST;
-				}else if(rowPos.equals(cursorPos.SECOND)){
-					rowPos = cursorPos.THIRD;
-					colPos = cursorPos.FIRST;
-				}else if(rowPos.equals(cursorPos.THIRD)){
-					rowPos = cursorPos.SAVE;
-					colPos = cursorPos.SAVE;
-				}
-				
-			}else if(colPos.equals(cursorPos.SAVE)){
-				rowPos = cursorPos.LIST;
-				colPos = cursorPos.LIST;
-			}else if(colPos.equals(cursorPos.LIST)){
-				rowPos = cursorPos.SPEAKER;
-				colPos = cursorPos.SPEAKER;
-			}else if(colPos.equals(cursorPos.SPEAKER)){
-				rowPos = cursorPos.FIRST;
-				colPos = cursorPos.FIRST;
-			}*/
 			
 			showCursor();
 		}else if(s.equals("B")||(s.equals("b")&&mode==0)){
@@ -668,7 +720,7 @@ public class subGroup extends ActionBarActivity {
 				colPos = cursorPos.SECOND;
 				showCursor();
 			}else{
-				if(rowPos.equals(cursorPos.FOURTH)){
+				if(rowPos.equals(cursorPos.FIFTH)){
 					if(colPos.equals(cursorPos.THIRD)){
 						String mString = mTV.getText().toString();
 					    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
@@ -684,30 +736,23 @@ public class subGroup extends ActionBarActivity {
 						startActivity(i);				
 						return;
 					}					
+				}else if(rowPos.equals(cursorPos.FOURTH)){
+					if(colPos.equals(cursorPos.FIRST)){
+						completeLastWord(firstHint);
+					}else if(colPos.equals(cursorPos.SECOND)){
+						completeLastWord(secondHint);
+					}else if(colPos.equals(cursorPos.THIRD)){
+						completeLastWord(thirdHint);
+					}
+					
+					return;
 				}
+				
 				subgroup = findSubGroup();
 				if(subgroup!=0){
 					handleClick();				
 			     }
-			}/*if(colPos.equals(cursorPos.SPEAKER)){
-				String mString = mTV.getText().toString();
-			    tts.speak(mString, TextToSpeech.QUEUE_FLUSH, null);
-			    return;
-			}else if(colPos.equals(cursorPos.SAVE)){
-				DatabaseOperations DOP = new DatabaseOperations(getApplicationContext());
-				DOP.putInfo(DOP, mTV.getText().toString());
-				showToast("List Updated");				
-				return;
-			}else if(colPos.equals(cursorPos.LIST)){
-				final Intent i = new Intent(subGroup.this, storedPhrases.class);
-				Log.d("Main Activity", "Leaving Main to list");
-				startActivity(i);				
-				return;
 			}
-			subgroup = findSubGroup();
-			if(subgroup!=0){
-				handleClick();
-			}*/
 			
 			prevTime = System.currentTimeMillis();
 		}else if(s.equals("a")){
@@ -815,4 +860,65 @@ public class subGroup extends ActionBarActivity {
 		}
 		
 	}
+	
+	public void onClickAC1(View v){
+		completeLastWord(firstHint);
+	}
+	
+	public void onClickAC2(View v){
+		completeLastWord(secondHint);
+	}
+	
+	public void onClickAC3(View v){
+		completeLastWord(thirdHint);
+	}
+	
+	public void completeLastWord(String s){
+		if(s==null) return;
+		if(s.equals("")) return;
+		
+		int posToInsert = givePosOfLastWord();
+		String fullText = mTV.getText().toString();
+		
+		String strBeforeLastSpace = "" ;
+		if(posToInsert>0){
+			strBeforeLastSpace = fullText.substring(0, posToInsert);
+		}
+		
+		String completedText = strBeforeLastSpace + s;
+		
+		mTV.setText(completedText+" ");
+		mTV.setSelection(mTV.getText().length());
+		MainActivity.mString = mTV.getText().toString();
+	}
+
+	private String lastWord(int posToInsert) {
+		String fullText = mTV.getText().toString();
+		String currWord;
+		
+		if(posToInsert==fullText.length()){ 
+			currWord = "a";
+		}else{
+			currWord = fullText.substring(posToInsert);
+		}
+		return currWord;
+	}
+
+	private int givePosOfLastWord() {
+		String fullText = mTV.getText().toString();
+		String currWord;
+		//get the string after last space
+		int lastSpaceIndex = -1;
+		
+		if(fullText.length()==0) return 0;
+		
+		for(int i=fullText.length()-1;i>=0;--i){
+			if(fullText.charAt(i)==' '){
+				lastSpaceIndex = i;
+				break;
+			}
+		}		
+		
+		return lastSpaceIndex+1;
+	}	
 }

@@ -55,7 +55,7 @@ public class storedPhrases extends ActionBarActivity{
 		//Default constructor
 	}
 	
-	@Override 
+	@SuppressLint("NewApi") @Override 
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.storedphrase);

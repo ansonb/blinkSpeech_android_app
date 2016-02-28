@@ -1,8 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="app_name">blinkSpeech_UI</string>
+    <string name="app_name">blinkSpeech</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string-array name="autoCompleteDictionary">
+        <item>Hello</item>
+        <item >Anson</item>
+        <item >Pravin</item>
+        <item >Shubham</item>
+        <item >Abhishek</item>
+        <item >Siddharth</item>
+        <item >Good</item>
+        <item >Morning</item>
+        <item >blinkSpeech</item>
+        <item >Thankyou</item>
+        <item >Toilet</item>
+        <item >Welcome</item>
+        <item >GoodBye</item>
+        <item >Evening</item>
+        <item >Awesome</item>
+    </string-array>
 
 </resources>

@@ -148,7 +148,7 @@
         android:gravity="center"
         android:layout_marginTop="1dp"/>
 
-     <EditText
+     <MultiAutoCompleteTextView
          android:id="@+id/textView1"
          android:layout_width="match_parent"
          android:layout_height="40dp"
@@ -187,9 +187,48 @@
          android:layout_alignTop="@id/textView1"
          android:layout_toLeftOf="@id/goToList"
          android:background="@drawable/save"/>
-     
 
-     
-     
+     <TextView
+         android:id="@+id/autocomplete1"
+         android:layout_width="wrap_content"
+         android:layout_height="20dp"
+         android:layout_above="@+id/textView1"
+         android:layout_alignLeft="@+id/textView1"
+         android:background="@drawable/rounded_corners_gray"
+         android:textColor="#ffffff"     
+         android:enabled="true"  
+         android:gravity="center"
+         android:clickable="true"
+         android:onClick="onClickAC1"
+         android:text="@+string/hello_world"/>
+
+     <TextView
+         android:id="@+id/autocomplete2"
+         android:layout_width="wrap_content"
+         android:layout_height="20dp"
+         android:layout_above="@+id/textView1"
+         android:layout_toRightOf="@+id/autocomplete1"
+         android:background="@drawable/rounded_corners_gray"    
+         android:textColor="#ffffff"     
+         android:enabled="true" 
+         android:gravity="center"
+         android:clickable="true"
+         android:onClick="onClickAC2"
+         android:text="@+string/hello_world"/>
+
+     <TextView
+         android:id="@+id/autocomplete3"
+         android:layout_width="wrap_content"
+         android:layout_height="20dp"
+         android:layout_above="@+id/textView1"
+         android:layout_toRightOf="@+id/autocomplete2"
+         android:background="@drawable/rounded_corners_gray"  
+         android:textColor="#ffffff"                 
+         android:enabled="true" 
+         android:gravity="center"
+         android:clickable="true"
+         android:onClick="onClickAC3"
+         android:text="@+string/hello_world"  />
+
 
 </RelativeLayout>
