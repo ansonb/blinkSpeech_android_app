@@ -23,7 +23,9 @@
         android:enabled="true"
         android:gravity="center"
         android:alpha="0.75"
-        android:layout_marginRight="1dp"/>
+        android:layout_marginRight="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
 
 
     <TextView
@@ -39,7 +41,9 @@
         android:clickable="true"
         android:enabled="true"
         android:gravity="center"
-        android:layout_marginRight="1dp"/>
+        android:layout_marginRight="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
 
     <TextView
         android:id="@+id/ghi3"
@@ -52,7 +56,9 @@
         android:text="GHI3"
         android:clickable="true"
         android:enabled="true"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
     
      <TextView
         android:id="@+id/jkl4"
@@ -68,7 +74,9 @@
         android:enabled="true"
         android:gravity="center"
         android:layout_marginRight="1dp"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
      
      <TextView
         android:id="@+id/mno5"
@@ -84,7 +92,9 @@
         android:enabled="true"
         android:gravity="center"
         android:layout_marginRight="1dp"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
      
      <TextView
         android:id="@+id/pqr6"
@@ -99,7 +109,9 @@
         android:clickable="true"
         android:enabled="true"
         android:gravity="center"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
      
      <TextView
         android:id="@+id/stu7"
@@ -115,7 +127,9 @@
         android:enabled="true"
         android:gravity="center"
         android:layout_marginRight="1dp"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
      
      <TextView
         android:id="@+id/vwx8"
@@ -131,7 +145,9 @@
         android:enabled="true"
         android:gravity="center"
         android:layout_marginRight="1dp"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
      
      <TextView
         android:id="@+id/yz90"
@@ -146,7 +162,9 @@
         android:clickable="true"
         android:enabled="true"
         android:gravity="center"
-        android:layout_marginTop="1dp"/>
+        android:layout_marginTop="1dp"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="20dp"/>
 
      <MultiAutoCompleteTextView
          android:id="@+id/textView1"

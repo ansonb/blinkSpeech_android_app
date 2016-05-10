@@ -177,7 +177,7 @@ public class subGroup extends ActionBarActivity {
         Point size = new Point();
         display.getSize(size);
         width = size.x-48;
-        height = size.y-200;
+        height = size.y-260;
         
         mIV1.setWidth(width/3);
         mIV2.setWidth(width/3);
@@ -367,15 +367,15 @@ public class subGroup extends ActionBarActivity {
 	
 	@SuppressLint("NewApi") private void setSubGroupText(){
 		
-		mIV1.setText(Character.toString(keyBoard[group-1][0]));
+		mIV1.setText("' "+Character.toString(keyBoard[group-1][0])+" '");
 		mIV2.setText(Character.toString(keyBoard[group-1][1]));
-		mIV3.setText(Character.toString(keyBoard[group-1][2]));
+		mIV3.setText("' "+Character.toString(keyBoard[group-1][2])+" '");
 		mIV4.setText(Character.toString(keyBoard[group-1][3]));
 		mIV5.setText("BACK");
 		mIV6.setText(Character.toString(keyBoard[group-1][5]));
-		mIV7.setText("SPACE");
+		mIV7.setText("[ ]");
 		mIV8.setText(Character.toString(keyBoard[group-1][7]));
-		mIV9.setText("BACKSPACE");
+		mIV9.setText("<-");
 		
 	}
 	
